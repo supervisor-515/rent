@@ -1,5 +1,5 @@
 /* 임대관리 PWA service worker — offline-first */
-const CACHE = 'rent-manager-v1';
+const CACHE = 'rent-manager-v2';
 const ASSETS = [
   './',
   './index.html',
