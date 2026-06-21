@@ -10,16 +10,15 @@ permissions:
   pages: write
   id-token: write
 
-# Allow one concurrent deployment, no cancel of in-progress runs
+# Allow one concurrent deployment
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  # Build job: no environment gate, so it runs even before Pages is first enabled.
+  # configure-pages (enablement: true) turns GitHub Pages on automatically here.
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -35,6 +34,14 @@ jobs:
         with:
           path: '.'
 
+  # Deploy job: runs after Pages exists, using the github-pages environment.
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
