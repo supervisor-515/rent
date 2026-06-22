@@ -1,10 +1,13 @@
 /* 임대관리 PWA service worker — offline-first */
-const CACHE = 'rent-manager-v3';
+const CACHE = 'rent-manager-v4';
 const ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './icon.svg'
+  './icon.svg',
+  './icon-180.png',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 self.addEventListener('install', (e) => {
