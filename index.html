@@ -774,6 +774,14 @@ function viewSettings(){
     ${subHeader('설정')}
     <div class="scroll"><div class="pad" style="display:flex;flex-direction:column;gap:20px;padding-top:6px;">
       <div>
+        <div class="sec-label">앱</div>
+        <div class="card list">
+          ${isStandalone()
+            ? `<div class="list-item" style="color:var(--olive);">홈 화면에 설치됨 <span style="color:var(--olive);">${I.check}</span></div>`
+            : `<button class="list-item" style="width:100%;" data-act="installApp">홈 화면에 앱 설치 <span style="color:#C4BBA8;">${I.chevR}</span></button>`}
+        </div>
+      </div>
+      <div>
         <div class="sec-label">건물 관리 ${b?`· ${esc(b.name)}`:''}</div>
         <div class="card list">
           <button class="list-item" style="width:100%;" data-act="addBuilding">건물 추가 <span style="color:var(--muted);">${I.plus}</span></button>
@@ -1091,6 +1099,7 @@ document.addEventListener('click', e=>{
     case 'restore': restore(); break;
     case 'loadSample': loadSample(); break;
     case 'resetAll': resetAll(); break;
+    case 'installApp': installApp(); break;
   }
 });
 
@@ -1180,6 +1189,48 @@ function seedSample(){
 /* ============================================================
    BOOT
    ============================================================ */
+/* ---------- PWA install ---------- */
+let deferredPrompt = null;
+function isStandalone(){
+  return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+}
+function isIOS(){
+  return /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+}
+window.addEventListener('beforeinstallprompt', (e)=>{
+  e.preventDefault();
+  deferredPrompt = e;
+  if(view.name==='settings') render();   // reveal/refresh install affordance
+});
+window.addEventListener('appinstalled', ()=>{
+  deferredPrompt = null;
+  toast('앱이 설치되었습니다');
+  if(view.name==='settings') render();
+});
+function installApp(){
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.finally(()=>{ deferredPrompt = null; });
+    return;
+  }
+  if(isIOS()){
+    modal(`<h3>홈 화면에 추가</h3>
+      <p style="margin:0 0 16px;font-size:14px;color:var(--muted);line-height:1.7;">
+        Safari 하단의 <b>공유</b> 버튼을 누른 뒤<br>
+        <b>‘홈 화면에 추가’</b>를 선택하세요.<br>
+        그러면 앱처럼 전체화면·오프라인으로 사용할 수 있습니다.
+      </p>
+      <button class="btn" data-m="ok">확인</button>`).querySelector('[data-m="ok"]').onclick = closeModal;
+    return;
+  }
+  modal(`<h3>앱 설치</h3>
+    <p style="margin:0 0 16px;font-size:14px;color:var(--muted);line-height:1.7;">
+      브라우저 주소창의 <b>설치 아이콘</b>(또는 메뉴 ⋮ → ‘앱 설치’)을 통해 설치할 수 있습니다.
+      이미 설치되어 있거나 일부 브라우저에서는 지원되지 않을 수 있습니다.
+    </p>
+    <button class="btn" data-m="ok">확인</button>`).querySelector('[data-m="ok"]').onclick = closeModal;
+}
+
 (function boot(){
   load();  // no auto-seed: a fresh install starts empty (빈 상태). Sample is opt-in via 설정.
   view = { name: state.buildings.length ? 'dashboard' : 'empty', params:{} };
